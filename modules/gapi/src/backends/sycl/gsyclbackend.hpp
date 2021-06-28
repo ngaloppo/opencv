@@ -1,11 +1,12 @@
 #ifdef HAVE_SYCL
 
-#ifnfed OPENCV_GAPI_GSYCLBACKEND_HPP
+#ifndef OPENCV_GAPI_GSYCLBACKEND_HPP
 #define OPENCV_GAPI_GSYCLBACKEND_HPP
 
 //includes go here
 // opencl/sycl backend includes
-//
+//#include <CL/sycl.hpp>
+//#include <CL/sycl/backend/opencl.hpp>
 
 namespace cv { namespace gimpl {
 
@@ -28,3 +29,5 @@ public:
 }}
 
 #endif // OPENCV_GAPI_GSYCLBACKEND_HPP
+
+#endif // HAVE_SYCL

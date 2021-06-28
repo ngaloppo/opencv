@@ -51,6 +51,7 @@ file(GLOB gapi_ext_hdrs
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/render/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/s11n/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/streaming/*.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/sycl/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/plaidml/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/util/*.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/include/opencv2/${name}/python/*.hpp"
@@ -146,6 +147,11 @@ set(gapi_srcs
     # PlaidML Backend
     src/backends/plaidml/gplaidmlcore.cpp
     src/backends/plaidml/gplaidmlbackend.cpp
+
+    #SYCL Backend
+    src/backends/sycl/gsyclbackend.cpp
+    src/backends/sycl/gsyclkernel.cpp
+    src/backends/sycl/gsyclcore.cpp
 
     # Common backend code
     src/backends/common/gmetabackend.cpp

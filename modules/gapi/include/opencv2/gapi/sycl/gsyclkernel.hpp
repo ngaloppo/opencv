@@ -11,82 +11,117 @@
 #include <opencv2/gapi/gkernel.hpp>
 #include <opencv2/gapi/garg.hpp>
 
+// FIXME: These are not included with OpenCV by default
+// This is protected by HAVE_SYCL in gsyclbackend.hpp, is this included anywhere else?
+#include <CL/sycl.hpp>
+#include <CL/sycl/backend/opencl.hpp> 
+
 // FIXME: namespace scheme for backends?
 namespace cv {
 
-namespace gimpl
-{
-  // Forward-declare an internal class
-  class GSYCLExecutable;
-} // namespace gimpl
+    namespace gimpl
+    {
+        // Forward-declare an internal class
+        class GSYCLExecutable;
+    } // namespace gimpl
 
-namespace gapi
-{
-/**
- * @brief This namespace contains G-API SYCL backend functions, structures, and symbols.
- */
-namespace sycl
-{
-  /**
-   * \addtogroup gapi_std_backends G-API Standard Backends
-   * @{
-   */
-  /**
-   * @brief FIXME: relevant dexoygen documentation for sycl backend
-   * @sa gapi_std_backends
-   */
-  GAPI_EXPORTS cv::gapi::GBackend backend();
-  /** @} */
-} // namespace sycl
-} // namespace gapi
+    namespace gapi
+    {
+        /**
+         * @brief This namespace contains G-API SYCL backend functions, structures, and symbols.
+         */
+        namespace sycl
+        {
+            /**
+             * \addtogroup gapi_std_backends G-API Standard Backends
+             * @{
+             */
+             /**
+              * @brief FIXME: relevant dexoygen documentation for sycl backend
+              * @sa gapi_std_backends
+              */
+            GAPI_EXPORTS cv::gapi::GBackend backend();
+            /** @} */
+        } // namespace sycl
+    } // namespace gapi
 
-// Represents arguments which are passed to a wrapped SYCL function
-// FIXME: put into detail?
-class GAPI_EXPORTS GSYCLContext
-{
-public:
-  // Generic accessor API
-  template<typename T>
-  const T& inArg(int input) { return m_args.at(input).get<T>(); }
+    // Represents arguments which are passed to a wrapped SYCL function
+    // FIXME: put into detail?
+    class GAPI_EXPORTS GSYCLContext
+    {
+    public:
+        // Generic accessor API
+        template<typename T>
+        const T& inArg(int input) { return m_args.at(input).get<T>(); }
 
-  // Syntax sugar
-  const cv::UMat& inMat(int input);
-  cv::UMat& outMatR(int output); // FIXME: Figure out if we're sticking with UMats
-                                 // and where those changes need to be made
-                                 //
+        // Syntax sugar
+        const cv::UMat& inMat(int input);
+        cv::UMat& outMatR(int output); // FIXME: Figure out if we're sticking with UMats
+                                       // and where those changes need to be made
+                                       //
 
-  const cv::Scalar& inVal(int input);
-  cv::Scalar& outValR(int output); // FIXME: Avoid cv::Scalar s = stx.outValR()
-  template<typename T> std::vector<T>& outVecR(int output) // FIXME: the same issue
-  {
-    return outVecRef(output).wref<T>();
-  }
-  template<typename T> T& outOpaqueR(int output) // FIXME: the same issue
-  {
-    return outOpaqueRef(output).wref<T>();
-  }
+        const cv::Scalar& inVal(int input);
+        cv::Scalar& outValR(int output); // FIXME: Avoid cv::Scalar s = stx.outValR()
+        template<typename T> std::vector<T>& outVecR(int output) // FIXME: the same issue
+        {
+            return outVecRef(output).wref<T>();
+        }
+        template<typename T> T& outOpaqueR(int output) // FIXME: the same issue
+        {
+            return outOpaqueRef(output).wref<T>();
+        }
 
-protected:
-  detail::VectorRef& outVecRef(int output);
-  detail::OpaqueRef& outOpaqueRef(int output);
+    protected:
+        detail::VectorRef& outVecRef(int output);
+        detail::OpaqueRef& outOpaqueRef(int output);
 
-  std::vector<GArg> m_args;
-  std::unordered_map<std::size_t, SRunArgP> m_results;
+        std::vector<GArg> m_args;
+        std::unordered_map<std::size_t, GRunArgP> m_results;
 
-  friend class gimpl::GSYCLExecutable;
-};
+        friend class gimpl::GSYCLExecutable;
+    };
 
-class GAPI_EXPORTS GSYCLKernel
-{
-public:
-  // This function is kernel's execution entry point (does the processing work)
-  using F = std::function<void(GSYCLContext &)>;
+    class GAPI_EXPORTS GSYCLKernel
+    {
+    public:
+        // This function is kernel's execution entry point (does the processing work)
+        using F = std::function<void(GSYCLContext&)>;
 
-  GSYCLKernel();
-  explicit GSYCLKernel(const F& f);
+        GSYCLKernel();
+        explicit GSYCLKernel(const F& f);
 
-  void apply(GSYCLContext &ctx);
+        void apply(GSYCLContext& ctx);
 
-protected:
-  F m_f;
-};
+    protected:
+        F m_f;
+    };
+
+    // FIXME: This is an ugly ad-hoc implementation. TODO: refactor
+
+    namespace detail
+    {
+        template<class T> struct sycl_get_in;
+        template<> struct sycl_get_in<cv::GMat>
+        {
+            // static sycl::Buffer
+        };
+    } // namespace detail
+
+    template<class Impl, class K>
+    class GSYCLKernelImpl : public cv::detail::SYCLCallHelper<Impl, typename K::InArgs, typename K::OutArgs>,
+        public cv::detail::KernelTag
+    {
+        using P = detail::SYCLCallHelper<Impl, typename K::InArgs, typename K::OutArgs>;
+
+    public:
+        using API = K;
+
+        static cv::gapi::GBackend backend() { return cv::gapi::sycl::backend(); }
+        static cv::GSYCLKernel    kernel() { return GSYCLKernel(&P::call); }
+    };
+
+#define GAPI_SYCL_KERNEL(Name, API) struct Name: public cv::GSYCLKernelImpl<Name, API>
+
+} // namespace cv
+
+#endif // OPENCV_GAPI_GSYCLKERNEL_HPP

@@ -44,7 +44,9 @@ namespace
 
     virtual EPtr compile(const ade::Graph &graph,
                          const cv::GCompileArgs &,
-                         const std::vector<ade::NodeHandle> &nodes) const override
+                         const std::vector<ade::NodeHandle> &nodes,
+                         const std::vector<cv::gimpl::Data>& ins_data,
+                         const std::vector<cv::gimpl::Data>& outs_data) const override
     {
       return EPtr{new cv::gimpl::GSYCLExecutable(graph, nodes)};
     }

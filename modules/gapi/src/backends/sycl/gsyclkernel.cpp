@@ -21,7 +21,7 @@ cv::GSYCLKernel::GSYCLKernel(const GSYCLKernel::F &f)
 {
 }
 
-void cv::GSYCLKernel::apply(GSYCLContext &stx)
+void cv::GSYCLKernel::apply(GSYCLContext &ctx)
 {
   CV_Assert(m_f);
   m_f(ctx);
