@@ -47,6 +47,7 @@ namespace cv {
 
     // Represents arguments which are passed to a wrapped SYCL function
     // FIXME: put into detail?
+    // TODO: Figure out where GSYCLContext values are initialized
     class GAPI_EXPORTS GSYCLContext
     {
     public:
@@ -55,8 +56,9 @@ namespace cv {
         const T& inArg(int input) { return m_args.at(input).get<T>(); }
 
         // Syntax sugar
-        const cv::UMat& inMat(int input);
-        cv::UMat& outMatR(int output); // FIXME: Figure out if we're sticking with UMats
+        const sycl::buffer<float, 1> inMat(int input);
+
+        cv::UMat& outMatR(int output); // TODO: Figure out if we're sticking with UMats
                                        // and where those changes need to be made
                                        //
 
@@ -72,6 +74,11 @@ namespace cv {
         }
 
     protected:
+        // SYCL specific values
+        // TODO: Determine when these get assigned
+        sycl::queue& m_queue;
+        sycl::context& m_context;
+
         detail::VectorRef& outVecRef(int output);
         detail::OpaqueRef& outOpaqueRef(int output);
 
@@ -97,7 +104,7 @@ namespace cv {
     };
 
     // FIXME: This is an ugly ad-hoc implementation. TODO: refactor
-
+    // TODO: Figure out the difference between the gtyped input wrappers and the cv typed ones
     namespace detail
     {
         template<class T> struct sycl_get_in;
@@ -111,6 +118,7 @@ namespace cv {
     class GSYCLKernelImpl : public cv::detail::SYCLCallHelper<Impl, typename K::InArgs, typename K::OutArgs>,
         public cv::detail::KernelTag
     {
+        // FIXME: Taken from OCL implementation, figure out if necessary
         using P = detail::SYCLCallHelper<Impl, typename K::InArgs, typename K::OutArgs>;
 
     public:
