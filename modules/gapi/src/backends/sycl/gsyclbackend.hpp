@@ -3,10 +3,19 @@
 #ifndef OPENCV_GAPI_GSYCLBACKEND_HPP
 #define OPENCV_GAPI_GSYCLBACKEND_HPP
 
-//includes go here
-// opencl/sycl backend includes
-//#include <CL/sycl.hpp>
-//#include <CL/sycl/backend/opencl.hpp>
+#include <map>
+#include <unordered_map>
+#include <tuple>
+#include <ade/util/algorithm.hpp>
+
+#include <opencv2/gapi/garg.hpp>
+#include <opencv2/gapi/gproto.hpp>
+#include <opencv2/gapi/sycl/gsyclkernel.hpp>
+
+#include "api/gorigin.hpp"
+#include "backends/common/gbackend.hpp"
+#include "compiler/gislandmodel.hpp"
+
 
 namespace cv { namespace gimpl {
 
@@ -18,6 +27,24 @@ struct SYCLUnit
 
 class GSYCLExecutable final: public GIslandExecutable
 {
+    const ade::Graph& m_g;
+    GModel::ConstGraph m_gm;
+
+    struct OperationInfo
+    {
+        ade::NodeHandle nh;
+        GMetaArgs expected_out_metas;
+    };
+
+    // Execution script, currently naive
+    std::vector<OperationInfo> m_script;
+    // List of all resources in graph (both internal and external)
+    std::vector<ade::NodeHandle> m_dataNodes;
+
+    // Actual data of all resources in graph (both internal and external)
+    Mag m_res;
+    GArg packArg(const GArg& arg);
+
 public:
 
   GSYCLExecutable(const ade::Graph  &graph,

@@ -145,6 +145,9 @@ using Mag = magazine::Class< cv::Mat
 #if !defined(GAPI_STANDALONE)
                            , cv::UMat
 #endif
+#ifdef HAVE_SYCL //FIXME: Does this need to be here? Can it?
+                           , sycl::buffer
+#endif
                            >;
 
 namespace magazine
