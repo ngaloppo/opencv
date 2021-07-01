@@ -51,6 +51,8 @@ namespace cv {
     class GAPI_EXPORTS GSYCLContext
     {
     public:
+        GSYCLContext();
+
         // Generic accessor API
         template<typename T>
         const T& inArg(int input) { return m_args.at(input).get<T>(); }
@@ -58,7 +60,7 @@ namespace cv {
         // Syntax sugar
         const sycl::buffer<float, 1> inMat(int input);
 
-        cv::UMat& outMatR(int output); // TODO: Figure out if we're sticking with UMats
+        sycl::buffer<float, 1>& outMatR(int output); // TODO: Figure out if we're sticking with UMats
                                        // and where those changes need to be made
                                        //
 
@@ -78,6 +80,8 @@ namespace cv {
         // TODO: Determine when these get assigned
         sycl::queue& m_queue;
         sycl::context& m_context;
+
+        void initSYCLContext();
 
         detail::VectorRef& outVecRef(int output);
         detail::OpaqueRef& outOpaqueRef(int output);

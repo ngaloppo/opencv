@@ -1,6 +1,29 @@
 #include <cassert>
-
+#include <opencv2/core/ocl.hpp>
 #include <opencv2/gapi/sycl/gsyclkernel.hpp>
+
+cv::GSYCLContext::GSYCLContext()
+{
+    initSYCLContext();
+}
+
+// FIXME: Currently using existing OpenCL interoperability with UMats
+//        instead of pure SYCL
+// FIXME: Add options for controlling device selection
+void cv::GSYCLContext::initSYCLContext()
+{
+    cl::sycl::default_selector def_selector;
+    m_queue = cl::sycl::queue(def_selector);
+    m_context = m_queue.get_context();
+
+    // bind opencl context, device, queue from SYCL to opencv
+    auto device = m_queue.get_device();
+    auto platform = device.get_platform();
+    auto ctx = cv::ocl::OpenCLExecutionContext::create(
+        platform.get_info<sycl::info::platform::name>(), platform.get(),
+        m_context.get(), device.get());
+    ctx.bind();
+}
 
 // Ugly interoperability implementation
 // FIXME: Figure out sycl buffer construction from native gapi data structures
