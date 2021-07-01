@@ -19,6 +19,10 @@
 
 #include "compiler/gmodel.hpp"
 
+#ifdef HAVE_SYCL
+#include <CL/sycl.hpp>
+#endif // HAVE_SYCL
+
 namespace cv {
 namespace gimpl {
 
@@ -147,7 +151,7 @@ using Mag = magazine::Class< cv::Mat
 #endif
 #ifdef HAVE_SYCL //FIXME: Does this need to be here? Can it?
                            , sycl::buffer
-#endif
+#endif // HAVE_SYCL
                            >;
 
 namespace magazine

@@ -53,16 +53,15 @@ namespace cv {
     public:
         GSYCLContext();
 
+        sycl::queue& getQueue();
+
         // Generic accessor API
         template<typename T>
         const T& inArg(int input) { return m_args.at(input).get<T>(); }
 
         // Syntax sugar
-        const sycl::buffer<float, 1> inMat(int input);
-
-        sycl::buffer<float, 1>& outMatR(int output); // TODO: Figure out if we're sticking with UMats
-                                       // and where those changes need to be made
-                                       //
+        const sycl::buffer<uint8_t, 2> inMat(int input);
+        sycl::buffer<uint8_t, 2>& outMatR(int output); 
 
         const cv::Scalar& inVal(int input);
         cv::Scalar& outValR(int output); // FIXME: Avoid cv::Scalar s = stx.outValR()

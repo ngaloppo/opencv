@@ -19,27 +19,35 @@ void cv::GSYCLContext::initSYCLContext()
     // bind opencl context, device, queue from SYCL to opencv
     auto device = m_queue.get_device();
     auto platform = device.get_platform();
-    auto ctx = cv::ocl::OpenCLExecutionContext::create(
-        platform.get_info<sycl::info::platform::name>(), platform.get(),
-        m_context.get(), device.get());
-    ctx.bind();
+
+    try
+    {
+        auto ctx = cv::ocl::OpenCLExecutionContext::create(
+            platform.get_info<sycl::info::platform::name>(), platform.get(),
+            m_context.get(), device.get());
+        ctx.bind();
+    }
+    catch (const cv::Exception& exception)
+    {
+        std::cerr << "OpenCV: Can't bind SYCL OpenCL context/device/queue: " << exception.what() << std::endl;
+    }
 }
 
-// Ugly interoperability implementation
-// FIXME: Figure out sycl buffer construction from native gapi data structures
-// FIXME: Figure out type logic, buffer is template class but UMat is not
-// FIXME: Figure out optimizations such as UMat interop when preceeding nodes use ocl backend
-const sycl::buffer<float, 1> cv::GSYCLContext::inMat(int input)
+sycl::queue& cv::GSYCLContext::getQueue()
 {
-    auto inArg = inArg<cv::UMat>(input);
-    cl_mem ocl_handleIn = static_cast<cl_mem>(inArg.handle(cv::ACCESS_RW));
-    return sycl::make_buffer<sycl::backend::opencl, T>(ocl_handleIn, m_context);
+    return m_queue;
 }
 
-// FIXME: Do we return buffers or UMats? How do we control this based on graph topology?
-cv::UMat& cv::GSYCLContext::outMatR(int output)
+// FIXME: Unsure if additional modifications are necessary here
+const sycl::buffer<uint8_t, 2>& cv::GSYCLContext::inMat(int input)
 {
-    return (*(util::get<cv::UMat*>(m_results.at(output))));
+    return (inArg<sycl::buffer<uint8_t, 2>>(input));
+}
+
+// FIXME: This will likely break util::get, may need to add support
+sycl::buffer<uint8_t, 2>& cv::GSYCLContext::outMatR(int output)
+{
+    return (*(util::get<sycl::buffer<uint8_t, 2>*>(m_results.at(output))));
 }
 
 const cv::Scalar& cv::GSYCLContext::inVal(int input)

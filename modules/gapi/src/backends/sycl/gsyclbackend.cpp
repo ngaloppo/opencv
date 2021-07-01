@@ -11,6 +11,8 @@
 #include <opencv2/gapi/util/any.hpp>
 #include <opencv2/gapi/gtype_traits.hpp>
 
+#include <opencv2/core/base.hpp>
+
 #include "compiler/gobjref.hpp"
 #include "compiler/gmodel.hpp"
 
@@ -135,16 +137,19 @@ void cv::gimpl::GSYCLExecutable::run(std::vector<InObj>&& input_objs,
     // has received from user (or from another Island, or mix...)
     // FIXME: Check input/output objects against GIsland protocol
 
-    // TODO: Determin if cleaning up sycl::buffers is necessary as with cv::UMats
+    // TODO: Determine if cleaning up sycl::buffers is necessary as with cv::UMats
     // const auto clean_up = [&input_objs, &output_objs](cv::gimpl::Mag* p)
     // {
     // }
 
     const auto bindBuffer = [this](const RcDesc& rc)
-    {   // FIXME: This is the current UMat implementation
-        //        Must update this for Mat -> sycl::buffer conversion
-        auto& mag_umat = m_res.template slot<cv::UMat>()[rc.id];
-        mag_umat = m_res.template slot<cv::Mat>()[rc.id].getUMat(ACCESS_READ);
+    {   // FIXME: This is likely a broken implementation. Figure out how to perform
+        //        type and dimension matching automatically
+        auto& mag_buffer = m_res.template slot<sycl::buffer<uint8_t, 2>>()[rc.id];
+        auto& mag_mat = m_res.template slot<cv::Mat>()[rc.id];
+        CV_CheckTypeEQ(mag_mat.type(), CV_8UC1, "Only single channel UInt8 Mats " <<
+                                    "are currently supported by SYCL");
+        mag_buffer(mag_mat.data, range<2>(mag_mat.rows, mag_mat.cols));
     };
 
     for (auto& it : input_objs) {
@@ -224,6 +229,10 @@ void cv::gimpl::GSYCLExecutable::run(std::vector<InObj>&& input_objs,
             }
         }
     } // for(m_script)
+
+    // FIXME: There may be a better place to do this
+    // FIXME: Add exception handling for SYCL
+    context.getQueue().wait_and_throw();
 
     // FIXME: Determine best interop method between sycl buffers and cv::Mat types
     for (auto& it : output_objs)
