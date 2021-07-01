@@ -4,6 +4,8 @@ OCV_OPTION(WITH_FREETYPE "Enable FreeType framework" OFF)
 OCV_OPTION(WITH_PLAIDML  "Include PlaidML2 support"  OFF)
 OCV_OPTION(WITH_SYCL "Enable support for SYCL" OFF)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR})
+
 if(NOT WITH_ADE)
   return()
 endif()
