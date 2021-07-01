@@ -149,8 +149,8 @@ using Mag = magazine::Class< cv::Mat
 #if !defined(GAPI_STANDALONE)
                            , cv::UMat
 #endif
-#ifdef HAVE_SYCL //FIXME: Does this need to be here? Can it?
-                           , sycl::buffer
+#ifdef HAVE_SYCL //FIXME: Issues with sycl buffers being templated?
+                           , sycl::buffer<uint8_t, 2>
 #endif // HAVE_SYCL
                            >;
 

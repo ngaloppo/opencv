@@ -119,8 +119,7 @@ cv::GArg cv::gimpl::GSYCLExecutable::packArg(const GArg& arg)
     const cv::gimpl::RcDesc& ref = arg.get<cv::gimpl::RcDesc>();
     switch (ref.shape)
     {
-    // FIXME: This is not the desired behavior, we want sycl type conversion
-    case GShape::GMAT: return GArg(m_res.slot<cv::UMat>()[ref.id]);
+    case GShape::GMAT: return GArg(m_res.slot<sycl::buffer<uint8_t, 2>>()[ref.id]);
     case GShape::GSCALAR: return GArg(m_res.slot<cv::Scalar>()[ref.id]);
     case GShape::GARRAY: return GArg(m_res.slot<cv::detail::VectorRef>().at(ref.id));
     case GShape::GOPAQUE: return GArg(m_res.slot<cv::detail::OpaqueRef>().at(ref.id));
@@ -208,7 +207,15 @@ void cv::gimpl::GSYCLExecutable::run(std::vector<InObj>&& input_objs,
             // FIXME: Can the same GArg type resolution mechanism be reused here?
             const auto out_port = ade::util::index(out_it);
             const auto& out_desc = ade::util::value(out_it);
-            context.m_results[out_port] = magazine::getObjPtr(m_res, out_desc, true);
+            //context.m_results[out_port] = magazine::getObjPtr(m_res, out_desc, true);
+            switch (out_desc.shape)
+            {
+            case GShape::GMAT:
+                context.m_results[out_port] = GRunArgP(&m_res.template slot<sycl::buffer<uint8_t, 2>>()[out_desc.id]);
+            default:
+                context.m_results[out_port] = magazine::getObjPtr(m_res, out_desc, false);
+                break;
+            }
         }
 
         // Trigger executable unit
@@ -234,7 +241,7 @@ void cv::gimpl::GSYCLExecutable::run(std::vector<InObj>&& input_objs,
     // FIXME: Add exception handling for SYCL
     context.getQueue().wait_and_throw();
 
-    // FIXME: Determine best interop method between sycl buffers and cv::Mat types
+    // FIXME: Determine where back conversion from SYCL buffers to Mats occurs
     for (auto& it : output_objs)
     {
         const auto& rc = it.first;
@@ -242,10 +249,13 @@ void cv::gimpl::GSYCLExecutable::run(std::vector<InObj>&& input_objs,
         magazine::writeBack(m_res, rc, g_arg);
         if (rc.shape == GShape::GMAT)
         {
+            // FIXME: Is this just a check or does this perform some assignment
             uchar* out_arg_data = m_res.template slot<cv::Mat>()[rc.id].data;
-            auto& mag_mat = m_res.template slot<cv::UMat>().at(rc.id);
-            GAPI_Assert((out_arg_data == (mag_mat.getMat(ACCESS_RW).data)) &&
-                " data for output parameters was reallocated ?");
+            //auto& mag_mat = m_res.template slot<cv::UMat>().at(rc.id);
+            //GAPI_Assert((out_arg_data == (mag_mat.getMat(ACCESS_RW).data)) &&
+            //    " data for output parameters was reallocated ?");
+            auto& mag_buffer = m_res.template slot<sycl::buffer<uint8_t, 2>>().at(rc.id);
+            
         }
     }
 
