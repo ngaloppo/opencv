@@ -28,6 +28,10 @@ ocv_add_module(gapi
       python
 )
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
+find_package(SYCL REQUIRED)
+set(CMAKE_CXX_COMPILER ${SYCL_COMPILER})
+
 if(MSVC)
   # Disable obsollete warning C4503 popping up on MSVC <<2017
   # https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-1-c4503?view=vs-2019
