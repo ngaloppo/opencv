@@ -60,7 +60,7 @@ namespace cv {
         const T& inArg(int input) { return m_args.at(input).get<T>(); }
 
         // Syntax sugar
-        const sycl::buffer<uint8_t, 2> inMat(int input);
+        const sycl::buffer<uint8_t, 2>& inMat(int input);
         sycl::buffer<uint8_t, 2>& outMatR(int output); 
 
         const cv::Scalar& inVal(int input);
@@ -77,8 +77,8 @@ namespace cv {
     protected:
         // SYCL specific values
         // TODO: Determine when these get assigned
-        sycl::queue& m_queue;
-        sycl::context& m_context;
+        sycl::queue m_queue;
+        sycl::context m_context;
 
         void initSYCLContext();
 
