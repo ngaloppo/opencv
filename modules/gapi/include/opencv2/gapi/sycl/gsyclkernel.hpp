@@ -113,8 +113,46 @@ namespace cv {
         template<class T> struct sycl_get_in;
         template<> struct sycl_get_in<cv::GMat>
         {
-            // static sycl::Buffer
+            static const sycl::buffer<uint8_t, 2> get(GSYCLContext& ctx, int idx)
+            {
+              return ctx.inMat(idx);
+            }
         };
+
+        template<class T> struct sycl_get_in
+        {
+          static T get(GSYCLContext& ctx, int idx) { return ctx.inArg<T>(idx); }
+        };
+
+        template<class T> struct sycl_get_out;
+        template<> struct sycl_get_out<cv::GMat>
+        {
+          static const sycl::buffer<uint8_t, 2> get(GSYCLContext& ctx, int idx)
+          {
+            return ctx.outMatR(idx);
+          }
+        };
+
+        template<typename, typename, typename>
+          struct SYCLCallHelper;
+
+        template<typename Impl, typename... Ins, typename... Outs>
+          struct SYCLCallHelper<Impl, std::tuple<Ins...>, std::tuple<Outs...>>
+          {
+            template<int... IIs, int... OIs>
+              static void call_impl(GSYCLContext &ctx, detail::Seq<IIs...>, detail::Seq<OIs...>)
+              {
+                Impl::run(sycl_get_in<Ins>::get(ctx, IIs)..., sycl_get_out<Outs>::get(ctx, OIs)...);
+              }
+
+            static void call(GSYCLContext& ctx)
+            {
+              call_impl(ctx,
+                        typename detail::MkSeq<sizeof...(Ins)>::type(),
+                        typename detail::MkSeq<sizeof...(Outs)>::type());
+            }
+          };
+
     } // namespace detail
 
     template<class Impl, class K>
