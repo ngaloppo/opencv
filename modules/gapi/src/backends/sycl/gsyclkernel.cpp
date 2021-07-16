@@ -47,7 +47,7 @@ const sycl::buffer<uint8_t, 2>& cv::GSYCLContext::inMat(int input)
 // FIXME: This will likely break util::get, may need to add support
 sycl::buffer<uint8_t, 2>& cv::GSYCLContext::outMatR(int output)
 {
-    return (*(util::get<sycl::buffer<uint8_t, 2>*>(m_results.at(output))));
+    return *util::get<sycl::buffer<uint8_t, 2>*>(m_results.at(output));
 }
 
 const cv::Scalar& cv::GSYCLContext::inVal(int input)
