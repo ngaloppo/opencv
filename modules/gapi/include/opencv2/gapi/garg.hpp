@@ -30,10 +30,6 @@
 #include <opencv2/gapi/streaming/source.hpp>
 #include <opencv2/gapi/rmat.hpp>
 
-#ifdef HAVE_SYCL
-#include <CL/sycl.hpp>
-#endif // HAVE_SYCL
-
 namespace cv {
 
 class GArg;
@@ -110,9 +106,6 @@ using GRunArgBase  = util::variant<
     cv::detail::VectorRef,
     cv::detail::OpaqueRef,
     cv::MediaFrame
-#ifdef HAVE_SYCL
-    ,sycl::buffer<uint8_t, 2>
-#endif // HAVE_SYCL
     >;
 
 namespace detail {
@@ -220,9 +213,6 @@ using GRunArgP = util::variant<
     cv::MediaFrame*,
     cv::detail::VectorRef,
     cv::detail::OpaqueRef
-#ifdef HAVE_SYCL
-    ,sycl::buffer<uint8_t, 2>*
-#endif // HAVE_SYCL
     >;
 using GRunArgsP = std::vector<GRunArgP>;
 

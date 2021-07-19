@@ -20,10 +20,6 @@
 #include <opencv2/gapi/media.hpp>
 #include <opencv2/gapi/gcommon.hpp>
 
-#ifdef HAVE_SYCL
-#include <CL/sycl.hpp>
-#endif // HAVE_SYCL
-
 namespace cv
 {
 namespace detail
@@ -144,9 +140,6 @@ namespace detail
     template<typename U> struct GTypeOf<std::vector<U> >       { using type = cv::GArray<U>; };
     template<typename U> struct GTypeOf                        { using type = cv::GOpaque<U>;};
     template<>           struct GTypeOf<cv::MediaFrame>        { using type = cv::GFrame;    };
-#ifdef HAVE_SYCL
-    template<>           struct GTypeOf<sycl::buffer<uint8_t, 2>> { using type = cv::GMat;    };
-#endif // HAVE_SYCL
     // FIXME: This is not quite correct since IStreamSource may produce not only Mat but also Scalar
     // and vector data. TODO: Extend the type dispatching on these types too.
     template<>           struct GTypeOf<cv::gapi::wip::IStreamSource::Ptr> { using type = cv::GMat;};
